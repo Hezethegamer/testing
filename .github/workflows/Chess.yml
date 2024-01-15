@@ -1,42 +1,19 @@
-name: Chess
+name: Chess Game
 
 on:
   issues:
     types: [opened]
 
 jobs:
-  move:
-    permissions:
-      issues: write
+  play:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.issue.title, 'Chess:')
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      # Set up a Python 3.10 (64-bit) instance
-      - name: Setting up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-          architecture: "x64"
-
-      # Use pip to install the dependencies and then run the script
-      - name: Play chess
-        env:
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-        run: |
-          pip install -r requirements.txt
-          python main.py
-
-      # Create new commit with the changed files and push it to GitHub
-      - name: Commit and push changes
-        env:
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
-        run: |
+      - name: Build and run
+        run: dotnet run --project ChessGame
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
