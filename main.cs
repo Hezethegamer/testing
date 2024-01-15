@@ -1,4 +1,415 @@
+// Chess game in C#
+
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
+namespace ChessGame
+{
+    public enum Action
+    {
+        UNKNOWN = 0,
+        MOVE = 1,
+        NEW_GAME = 2
+    }
+
+    public class ChessGame
+    {
+        private static Dictionary<string, string> images = new Dictionary<string, string>()
+        {
+            {"r", "img/black/rook.png"},
+            {"n", "img/black/knight.png"},
+            {"b", "img/black/bishop.png"},
+            {"q", "img/black/queen.png"},
+            {"k", "img/black/king.png"},
+            {"p", "img/black/pawn.png"},
+            {"R", "img/white/rook.png"},
+            {"N", "img/white/knight.png"},
+            {"B", "img/white/bishop.png"},
+            {"Q", "img/white/queen.png"},
+            {"K", "img/white/king.png"},
+            {"P", "img/white/pawn.png"},
+            {".", "img/blank.png"}
+        };
+
+        private static Dictionary<string, string> squareNames = new Dictionary<string, string>()
+        {
+            {"a", "A"},
+            {"b", "B"},
+            {"c", "C"},
+            {"d", "D"},
+            {"e", "E"},
+            {"f", "F"},
+            {"g", "G"},
+            {"h", "H"}
+        };
+
+        private static Dictionary<string, string> reverseSquareNames = squareNames.ToDictionary(x => x.Value, x => x.Key);
+
+        private static Dictionary<string, string> markers = new Dictionary<string, string>()
+        {
+            {"board", "<!-- BOARD -->"},
+            {"moves", "<!-- MOVES -->"},
+            {"turn", "<!-- TURN -->"},
+            {"last_moves", "<!-- LAST_MOVES -->"},
+            {"top_moves", "<!-- TOP_MOVES -->"}
+        };
+
+        private static Dictionary<string, string> comments = new Dictionary<string, string>()
+        {
+            {"successful_new_game", "New game started by {author}"},
+            {"invalid_new_game", "Invalid new game request by {author}"},
+            {"successful_move", "{author} moved {move}"},
+            {"invalid_move", "Invalid move {move} by {author}"},
+            {"consecutive_moves", "Two moves in a row by {author}"},
+            {"unknown_command", "Unknown command by {author}"},
+            {"game_over", "{outcome}! Players: {players}. Total moves: {num_moves}. Total players: {num_players}"}
+        };
+
+        private static Dictionary<string, string> issues = new Dictionary<string, string>()
+        {
+            {"link", "https://github.com/{repo}/issues/new?{params}"},
+            {"move", "title=Chess: Move {source} to {dest}"},
+            {"new_game", "title=Chess: Start new game"}
+        };
+
+        private static Dictionary<string, string> settings = new Dictionary<string, string>()
+        {
+            {"max_top_moves", "5"},
+            {"max_last_moves", "10"}
+        };
+
+        private static Dictionary<string, string> data = new Dictionary<string, string>()
+        {
+            {"top_moves", "data/top_moves.txt"},
+            {"last_moves", "data/last_moves.txt"},
+            {"settings", "data/settings.yaml"}
+        };
+
+        private static Dictionary<string, string> games = new Dictionary<string, string>()
+        {
+            {"current", "games/current.pgn"}
+        };
+
+        private static Dictionary<string, string> images = new Dictionary<string, string>()
+        {
+            {"r", "img/black/rook.png"},
+            {"n", "img/black/knight.png"},
+            {"b", "img/black/bishop.png"},
+            {"q", "img/black/queen.png"},
+            {"k", "img/black/king.png"},
+            {"p", "img/black/pawn.png"},
+            {"R", "img/white/rook.png"},
+            {"N", "img/white/knight.png"},
+            {"B", "img/white/bishop.png"},
+            {"Q", "img/white/queen.png"},
+            {"K", "img/white/king.png"},
+            {"P", "img/white/pawn.png"},
+            {".", "img/blank.png"}
+        };
+
+        private static Dictionary<string, string> squareNames = new Dictionary<string, string>()
+        {
+            {"a", "A"},
+            {"b", "B"},
+            {"c", "C"},
+            {"d", "D"},
+            {"e", "E"},
+            {"f", "F"},
+            {"g", "G"},
+            {"h", "H"}
+        };
+
+        private static Dictionary<string, string> reverseSquareNames = squareNames.ToDictionary(x => x.Value, x => x.Key);
+
+        private static Dictionary<string, string> markers = new Dictionary<string, string>()
+        {
+            {"board", "<!-- BOARD -->"},
+            {"moves", "<!-- MOVES -->"},
+            {"turn", "<!-- TURN -->"},
+            {"last_moves", "<!-- LAST_MOVES -->"},
+            {"top_moves", "<!-- TOP_MOVES -->"}
+        };
+
+        private static Dictionary<string, string> comments = new Dictionary<string, string>()
+        {
+            {"successful_new_game", "New game started by {author}"},
+            {"invalid_new_game", "Invalid new game request by {author}"},
+            {"successful_move", "{author} moved {move}"},
+            {"invalid_move", "Invalid move {move} by {author}"},
+            {"consecutive_moves", "Two moves in a row by {author}"},
+            {"unknown_command", "Unknown command by {author}"},
+            {"game_over", "{outcome}! Players: {players}. Total moves: {num_moves}. Total players: {num_players}"}
+        };
+
+        private static Dictionary<string, string> issues = new Dictionary<string, string>()
+        {
+            {"link", "https://github.com/{repo}/issues/new?{params}"},
+            {"move", "title=Chess: Move {source} to {dest}"},
+            {"new_game", "title=Chess: Start new game"}
+        };
+
+        private static Dictionary<string, string> settings = new Dictionary<string, string>()
+        {
+            {"max_top_moves", "5"},
+            {"max_last_moves", "10"}
+        };
+
+        private static Dictionary<string, string> data = new Dictionary<string, string>()
+        {
+            {"top_moves", "data/top_moves.txt"},
+            {"last_moves", "data/last_moves.txt"},
+            {"settings", "data/settings.yaml"}
+        };
+
+        private static Dictionary<string, string> games = new Dictionary<string, string>()
+        {
+            {"current", "games/current.pgn"}
+        };
+
+        private static Dictionary<string, string> images = new Dictionary<string, string>()
+        {
+            {"r", "img/black/rook.png"},
+            {"n", "img/black/knight.png"},
+            {"b", "img/black/bishop.png"},
+            {"q", "img/black/queen.png"},
+            {"k", "img/black/king.png"},
+            {"p", "img/black/pawn.png"},
+            {"R", "img/white/rook.png"},
+            {"N", "img/white/knight.png"},
+            {"B", "img/white/bishop.png"},
+            {"Q", "img/white/queen.png"},
+            {"K", "img/white/king.png"},
+            {"P", "img/white/pawn.png"},
+            {".", "img/blank.png"}
+        };
+
+        private static Dictionary<string, string> squareNames = new Dictionary<string, string>()
+        {
+            {"a", "A"},
+            {"b", "B"},
+            {"c", "C"},
+            {"d", "D"},
+            {"e", "E"},
+            {"f", "F"},
+            {"g", "G"},
+            {"h", "H"}
+        };
+
+        private static Dictionary<string, string> reverseSquareNames = squareNames.ToDictionary(x => x.Value, x => x.Key);
+
+        private static Dictionary<string, string> markers = new Dictionary<string, string>()
+        {
+            {"board", "<!-- BOARD -->"},
+            {"moves", "<!-- MOVES -->"},
+            {"turn", "<!-- TURN -->"},
+            {"last_moves", "<!-- LAST_MOVES -->"},
+            {"top_moves", "<!-- TOP_MOVES -->"}
+        };
+
+        private static Dictionary<string, string> comments = new Dictionary<string, string>()
+        {
+            {"successful_new_game", "New game started by {author}"},
+            {"invalid_new_game", "Invalid new game request by {author}"},
+            {"successful_move", "{author} moved {move}"},
+            {"invalid_move", "Invalid move {move} by {author}"},
+            {"consecutive_moves", "Two moves in a row by {author}"},
+            {"unknown_command", "Unknown command by {author}"},
+            {"game_over", "{outcome}! Players: {players}. Total moves: {num_moves}. Total players: {num_players}"}
+        };
+
+        private static Dictionary<string, string> issues = new Dictionary<string, string>()
+        {
+            {"link", "https://github.com/{repo}/issues/new?{params}"},
+            {"move", "title=Chess: Move {source} to {dest}"},
+            {"new_game", "title=Chess: Start new game"}
+        };
+
+        private static Dictionary<string, string> settings = new Dictionary<string, string>()
+        {
+            {"max_top_moves", "5"},
+            {"max_last_moves", "10"}
+        };
+
+        private static Dictionary<string, string> data = new Dictionary<string, string>()
+        {
+            {"top_moves", "data/top_moves.txt"},
+            {"last_moves", "data/last_moves.txt"},
+            {"settings", "data/settings.yaml"}
+        };
+
+        private static Dictionary<string, string> games = new Dictionary<string, string>()
+        {
+            {"current", "games/current.pgn"}
+        };
+
+        private static Dictionary<string, string> images = new Dictionary<string, string>()
+        {
+            {"r", "img/black/rook.png"},
+            {"n", "img/black/knight.png"},
+            {"b", "img/black/bishop.png"},
+            {"q", "img/black/queen.png"},
+            {"k", "img/black/king.png"},
+            {"p", "img/black/pawn.png"},
+            {"R", "img/white/rook.png"},
+            {"N", "img/white/knight.png"},
+            {"B", "img/white/bishop.png"},
+            {"Q", "img/white/queen.png"},
+            {"K", "img/white/king.png"},
+            {"P", "img/white/pawn.png"},
+            {".", "img/blank.png"}
+        };
+
+        private static Dictionary<string, string> squareNames = new Dictionary<string, string>()
+        {
+            {"a", "A"},
+            {"b", "B"},
+            {"c", "C"},
+            {"d", "D"},
+            {"e", "E"},
+            {"f", "F"},
+            {"g", "G"},
+            {"h", "H"}
+        };
+
+        private static Dictionary<string, string> reverseSquareNames = squareNames.ToDictionary(x => x.Value, x => x.Key);
+
+        private static Dictionary<string, string> markers = new Dictionary<string, string>()
+        {
+            {"board", "<!-- BOARD -->"},
+            {"moves", "<!-- MOVES -->"},
+            {"turn", "<!-- TURN -->"},
+            {"last_moves", "<!-- LAST_MOVES -->"},
+            {"top_moves", "<!-- TOP_MOVES -->"}
+        };
+
+        private static Dictionary<string, string> comments = new Dictionary<string, string>()
+        {
+            {"successful_new_game", "New game started by {author}"},
+            {"invalid_new_game", "Invalid new game request by {author}"},
+            {"successful_move", "{author} moved {move}"},
+            {"invalid_move", "Invalid move {move} by {author}"},
+            {"consecutive_moves", "Two moves in a row by {author}"},
+            {"unknown_command", "Unknown command by {author}"},
+            {"game_over", "{outcome}! Players: {players}. Total moves: {num_moves}. Total players: {num_players}"}
+        };
+
+        private static Dictionary<string, string> issues = new Dictionary<string, string>()
+        {
+            {"link", "https://github.com/{repo}/issues/new?{params}"},
+            {"move", "title=Chess: Move {source} to {dest}"},
+            {"new_game", "title=Chess: Start new game"}
+        };
+
+        private static Dictionary<string, string> settings = new Dictionary<string, string>()
+        {
+            {"max_top_moves", "5"},
+            {"max_last_moves", "10"}
+        };
+
+        private static Dictionary<string, string> data = new Dictionary<string, string>()
+        {
+            {"top_moves", "data/top_moves.txt"},
+            {"last_moves", "data/last_moves.txt"},
+            {"settings", "data/settings.yaml"}
+        };
+
+        private static Dictionary<string, string> games = new Dictionary<string, string>()
+        {
+            {"current", "games/current.pgn"}
+        };
+
+        private static Dictionary<string, string> images = new Dictionary<string, string>()
+        {
+            {"r", "img/black/rook.png"},
+            {"n", "img/black/knight.png"},
+            {"b", "img/black/bishop.png"},
+            {"q", "img/black/queen.png"},
+            {"k", "img/black/king.png"},
+            {"p", "img/black/pawn.png"},
+            {"R", "img/white/rook.png"},
+            {"N", "img/white/knight.png"},
+            {"B", "img/white/bishop.png"},
+            {"Q", "img/white/queen.png"},
+            {"K", "img/white/king.png"},
+            {"P", "img/white/pawn.png"},
+            {".", "img/blank.png"}
+        };
+
+        private static Dictionary<string, string> squareNames = new Dictionary<string, string>()
+        {
+            {"a", "A"},
+            {"b", "B"},
+            {"c", "C"},
+            {"d", "D"},
+            {"e", "E"},
+            {"f", "F"},
+            {"g", "G"},
+            {"h", "H"}
+        };
+
+        private static Dictionary<string, string> reverseSquareNames = squareNames.ToDictionary(x => x.Value, x => x.Key);
+
+        private static Dictionary<string, string> markers = new Dictionary<string, string>()
+        {
+            {"board", "<!-- BOARD -->"},
+            {"moves", "<!-- MOVES -->"},
+            {"turn", "<!-- TURN -->"},
+            {"last_moves", "<!-- LAST_MOVES -->"},
+            {"top_moves", "<!-- TOP_MOVES -->"}
+        };
+
+        private static Dictionary<string, string> comments = new Dictionary<string, string>()
+        {
+            {"successful_new_game", "New game started by {author}"},
+            {"invalid_new_game", "Invalid new game request by {author}"},
+            {"successful_move", "{author} moved {move}"},
+            {"invalid_move", "Invalid move {move} by {author}"},
+            {"consecutive_moves", "Two moves in a row by {author}"},
+            {"unknown_command", "Unknown command by {author}"},
+            {"game_over", "{outcome}! Players: {players}. Total moves: {num_moves}. Total players: {num_players}"}
+        };
+
+        private static Dictionary<string, string> issues = new Dictionary<string, string>()
+        {
+            {"link", "https://github.com/{repo}/issues/new?{params}"},
+            {"move", "title=Chess: Move {source} to {dest}"},
+            {"new_game", "title=Chess: Start new game"}
+        };
+
+        private static Dictionary<string, string> settings = new Dictionary<string, string>()
+        {
+            {"max_top_moves", "5"},
+            {"max_last_moves", "10"}
+        };
+
+        private static Dictionary<string, string> data = new Dictionary<string, string>()
+        {
+            {"top_moves", "data/top_moves.txt"},
+            {"last_moves", "data/last_moves.txt"},
+            {"settings", "data/settings.yaml"}
+        };
+
+        private static Dictionary<string, string> games = new Dictionary<string, string>()
+        {
+            {"current", "games/current.pgn"}
+        };
+
+        private static Dictionary<string, string> images = new Dictionary<string, string>()
+        {
+            {"r", "img/black/rook.png"},
+            {"n", "img/black/knight.png"},
+            {"b", "img/black/bishop.png"},
+            {"q", "img/black/queen.png"},
+        }
+    }
+}
+
+/*using System;
 using System.Collections.Generic;
 
 namespace ChessGame
@@ -56,6 +467,7 @@ public class Program
         // Game logic goes here
     }
 }
+*/
 /*using System;
 using System.Collections.Generic;
 using System.IO;
