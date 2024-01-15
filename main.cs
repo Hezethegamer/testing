@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using Octokit;
@@ -49,20 +50,22 @@ namespace ChessBot
 
             using (var settingsFile = new StreamReader("data/settings.yaml"))
             {
-                var deserializer = new Deserializer();
-                var settings = deserializer.Deserialize<Dictionary<string, dynamic>>(settingsFile);
+                var deserializer = new DeserializerBuilder()
+                    .WithNamingConvention(UnderscoredNamingConvention.Instance)
+                    .Build();
+                var settings = deserializer.Deserialize<Settings>(settingsFile);
             }
 
             if (action.Item1 == Action.NEW_GAME)
             {
                 if (File.Exists("games/current.pgn") && issueAuthor != repoOwner)
                 {
-                    issue.Comment.Create(settings["comments"]["invalid_new_game"].Replace("{author}", issueAuthor));
+                    issue.Comment.Create(settings.Comments.InvalidNewGame.Replace("{author}", issueAuthor));
                     issue.Edit(new IssueUpdate { State = ItemState.Closed });
                     return new Tuple<bool, string>(false, "ERROR: A current game is in progress. Only the repo owner can start a new game");
                 }
 
-                issue.Comment.Create(settings["comments"]["successful_new_game"].Replace("{author}", issueAuthor));
+                issue.Comment.Create(settings.Comments.SuccessfulNewGame.Replace("{author}", issueAuthor));
                 issue.Edit(new IssueUpdate { State = ItemState.Closed });
 
                 using (var lastMoves = new StreamWriter("data/last_moves.txt"))
@@ -105,7 +108,7 @@ namespace ChessBot
 
                 if (action.Item2?.Substring(0, 2) == action.Item2?.Substring(2))
                 {
-                    issue.Comment.Create(settings["comments"]["invalid_move"].Replace("{author}", issueAuthor).Replace("{move}", action.Item2));
+                    issue.Comment.Create(settings.Comments.InvalidMove.Replace("{author}", issueAuthor).Replace("{move}", action.Item2));
                     issue.Edit(new IssueUpdate { State = ItemState.Closed, Labels = { "Invalid" } });
                     return new Tuple<bool, string>(false, "ERROR: Move is invalid!");
                 }
@@ -121,7 +124,7 @@ namespace ChessBot
                 // Check if player is moving twice in a row
                 if (lastPlayer == issueAuthor && !lastMove.Contains("Start game"))
                 {
-                    issue.Comment.Create(settings["comments"]["consecutive_moves"].Replace("{author}", issueAuthor));
+                    issue.Comment.Create(settings.Comments.ConsecutiveMoves.Replace("{author}", issueAuthor));
                     issue.Edit(new IssueUpdate { State = ItemState.Closed, Labels = { "Invalid" } });
                     return new Tuple<bool, string>(false, "ERROR: Two moves in a row!");
                 }
@@ -129,7 +132,7 @@ namespace ChessBot
                 // Check if move is valid
                 if (!move.IsValid(gameboard.LegalMoves))
                 {
-                    issue.Comment.Create(settings["comments"]["invalid_move"].Replace("{author}", issueAuthor).Replace("{move}", action.Item2));
+                    issue.Comment.Create(settings.Comments.InvalidMove.Replace("{author}", issueAuthor).Replace("{move}", action.Item2));
                     issue.Edit(new IssueUpdate { State = ItemState.Closed, Labels = { "Invalid" } });
                     return new Tuple<bool, string>(false, "ERROR: Move is invalid!");
                 }
@@ -137,7 +140,7 @@ namespace ChessBot
                 // Check if board is valid
                 if (!gameboard.IsValid())
                 {
-                    issue.Comment.Create(settings["comments"]["invalid_board"].Replace("{author}", issueAuthor));
+                    issue.Comment.Create(settings.Comments.InvalidBoard.Replace("{author}", issueAuthor));
                     issue.Edit(new IssueUpdate { State = ItemState.Closed, Labels = { "Invalid" } });
                     return new Tuple<bool, string>(false, "ERROR: Board is invalid!");
                 }
@@ -145,7 +148,7 @@ namespace ChessBot
                 var issueLabels = new List<string> { "⚔️ Capture!" };
                 issueLabels.Add(gameboard.Turn == Chess.Color.White ? "White" : "Black");
 
-                issue.Comment.Create(settings["comments"]["successful_move"].Replace("{author}", issueAuthor).Replace("{move}", action.Item2));
+                issue.Comment.Create(settings.Comments.SuccessfulMove.Replace("{author}", issueAuthor).Replace("{move}", action.Item2));
                 issue.Edit(new IssueUpdate { State = ItemState.Closed, Labels = issueLabels });
 
                 UpdateLastMoves(action.Item2 + ": " + issueAuthor);
@@ -158,7 +161,7 @@ namespace ChessBot
             }
             else if (action.Item1 == Action.UNKNOWN)
             {
-                issue.Comment.Create(settings["comments"]["unknown_command"].Replace("{author}", issueAuthor));
+                issue.Comment.Create(settings.Comments.UnknownCommand.Replace("{author}", issueAuthor));
                 issue.Edit(new IssueUpdate { State = ItemState.Closed, Labels = { "Invalid" } });
                 return new Tuple<bool, string>(false, "ERROR: Unknown action");
             }
@@ -166,7 +169,7 @@ namespace ChessBot
             // Save game to "games/current.pgn"
             File.WriteAllText("games/current.pgn", game.ToString() + Environment.NewLine);
 
-            var lastMoves = Markdown.GenerateLastMoves();
+            var lastMoves = Markdown.GenerateLastMoves(settings);
 
             // If it is a game over, archive current game
             if (gameboard.IsGameOver())
@@ -194,7 +197,7 @@ namespace ChessBot
                     issue.Labels.Add("👑 Winner!");
                 }
 
-                issue.Comment.Create(settings["comments"]["game_over"].Replace("{outcome}", winMsg.GetValueOrDefault(gameboard.Result, "UNKNOWN"))
+                issue.Comment.Create(settings.Comments.GameOver.Replace("{outcome}", winMsg.GetValueOrDefault(gameboard.Result, "UNKNOWN"))
                     .Replace("{players}", string.Join(", ", playerList))
                     .Replace("{num_moves}", (lines.Count - 1).ToString())
                     .Replace("{num_players}", playerList.Count.ToString()));
@@ -206,19 +209,19 @@ namespace ChessBot
             using (var file = new StreamReader("README.md"))
             {
                 var readme = file.ReadToEnd();
-                readme = ReplaceTextBetween(readme, settings["markers"]["board"], "{chess_board}");
-                readme = ReplaceTextBetween(readme, settings["markers"]["moves"], "{moves_list}");
-                readme = ReplaceTextBetween(readme, settings["markers"]["turn"], "{turn}");
-                readme = ReplaceTextBetween(readme, settings["markers"]["last_moves"], "{last_moves}");
-                readme = ReplaceTextBetween(readme, settings["markers"]["top_moves"], "{top_moves}");
+                readme = ReplaceTextBetween(readme, settings.Markers.Board, "{chess_board}");
+                readme = ReplaceTextBetween(readme, settings.Markers.Moves, "{moves_list}");
+                readme = ReplaceTextBetween(readme, settings.Markers.Turn, "{turn}");
+                readme = ReplaceTextBetween(readme, settings.Markers.LastMoves, "{last_moves}");
+                readme = ReplaceTextBetween(readme, settings.Markers.TopMoves, "{top_moves}");
 
                 using (var outFile = new StreamWriter("README.md"))
                 {
                     outFile.Write(readme.Replace("{chess_board}", Markdown.BoardToMarkdown(gameboard))
-                        .Replace("{moves_list}", Markdown.GenerateMovesList(gameboard))
+                        .Replace("{moves_list}", Markdown.GenerateMovesList(gameboard, settings))
                         .Replace("{turn}", gameboard.Turn == Chess.Color.White ? "white" : "black")
                         .Replace("{last_moves}", lastMoves)
-                        .Replace("{top_moves}", Markdown.GenerateTopMoves()));
+                        .Replace("{top_moves}", Markdown.GenerateTopMoves(settings)));
                 }
             }
 
@@ -244,10 +247,10 @@ namespace ChessBot
             return new Tuple<Action, string>(Action.UNKNOWN, null);
         }
 
-        public static string ReplaceTextBetween(string originalText, string marker, string replacementText)
+        public static string ReplaceTextBetween(string originalText, Marker marker, string replacementText)
         {
-            var delimiterA = marker["begin"];
-            var delimiterB = marker["end"];
+            var delimiterA = marker.Begin;
+            var delimiterB = marker.End;
 
             if (!originalText.Contains(delimiterA) || !originalText.Contains(delimiterB))
             {
