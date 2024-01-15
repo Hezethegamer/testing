@@ -1,19 +1,42 @@
-name: Chess Game
+name: Chess
 
 on:
   issues:
     types: [opened]
 
 jobs:
-  play:
+  move:
+    permissions:
+      issues: write
     runs-on: ubuntu-latest
+    if: startsWith(github.event.issue.title, 'Chess:')
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Build and run
-        run: dotnet run --project ChessGame
+      - name: Setting up cs
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          architecture: "x64"
+
+      # Use pip to install the dependencies and then run the script
+      - name: Play chess
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: |
+          apt install mono-complete
+          mcs -out:chess chess.cs
+          mono chess
+
+      # Create new commit with the changed files and push it to GitHub
+      - name: Commit and push changes
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
