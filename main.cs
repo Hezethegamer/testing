@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 using Octokit;
+using yml;
 
 namespace ChessBot
 {
