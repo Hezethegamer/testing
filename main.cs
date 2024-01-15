@@ -1,5 +1,63 @@
 using System;
 using System.Collections.Generic;
+
+namespace ChessGame
+{
+    public class ChessBoard
+    {
+        private Piece[,] board;
+
+        public ChessBoard()
+        {
+            board = new Piece[8, 8];
+            InitializeBoard();
+        }
+
+        private void InitializeBoard()
+        {
+            // Initialize the board with pieces
+        }
+
+        public void MovePiece(int sourceX, int sourceY, int destX, int destY)
+        {
+            // Move the piece on the board
+        }
+
+        public void PrintBoard()
+        {
+            // Print the current state of the board
+        }
+    }
+
+    public abstract class Piece
+    {
+        public abstract bool IsValidMove(int sourceX, int sourceY, int destX, int destY);
+    }
+
+    public class Pawn : Piece
+    {
+        public override bool IsValidMove(int sourceX, int sourceY, int destX, int destY)
+        {
+            // Check if the move is valid for a pawn
+            return false;
+        }
+    }
+
+    // Implement other chess pieces (Rook, Knight, Bishop, Queen, King)
+}
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        ChessBoard chessBoard = new ChessBoard();
+        chessBoard.PrintBoard();
+
+        // Game logic goes here
+    }
+}
+/*using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -290,3 +348,4 @@ namespace ChessBot
         }
     }
 }
+*/
