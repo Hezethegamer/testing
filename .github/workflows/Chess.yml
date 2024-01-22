@@ -17,7 +17,10 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: "8.x"
-      - name: install yml.net
+
+      - name: Install YamlDotNet
+        run: dotnet add package YamlDotNet --version 13.7.1
+        shell: bash
 
       - name: Install Mono
         run: sudo apt-get install -y mono-complete
@@ -34,3 +37,5 @@ jobs:
           git add .
           git commit -m "${{ github.event.issue.title }} by ${{ github.event.issue.user.login }}"
           git push
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
