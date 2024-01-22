@@ -77,7 +77,7 @@ public class Issue
         }
     }
 
-    ####################### Testing functions #######################
+/*    ####################### Testing functions ####################### */
 
     public void ExpectLabels(List<string> labels)
     {
