@@ -21,10 +21,6 @@ jobs:
       - name: Create .NET Project
         run: dotnet new console -n ChessApp
 
-      - name: Install YamlDotNet
-        run: dotnet add ChessApp package YamlDotNet --version 13.7.1
-        working-directory: ./chess.cs
-
       - name: Install Mono
         run: sudo apt-get install -y mono-complete
 
