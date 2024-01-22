@@ -16,7 +16,7 @@ using ChessDotNet.Variants.ThreeCheck;
 using ChessDotNet.Variants;
 using MockGithub
 
-namespace ChessGame
+namespace ChessGame;
 {
     public enum Action
     {
