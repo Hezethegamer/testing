@@ -13,21 +13,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup .NET Core
+      - name: Set up .NET Core
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: "8.x"
 
+      - name: Create .NET Project
+        run: dotnet new console -n ChessApp
+
       - name: Install YamlDotNet
-        run: dotnet add package YamlDotNet --version 13.7.1
-        shell: bash
+        run: dotnet add ChessApp package YamlDotNet --version 13.7.1
+        working-directory: ./ChessApp
 
       - name: Install Mono
         run: sudo apt-get install -y mono-complete
 
       - name: Compile and Run Chess
         run: |
-          mcs -out:chess chess.cs
+          mcs -out:chess ./ChessApp/Program.cs
           mono chess
 
       - name: Commit and Push Changes
