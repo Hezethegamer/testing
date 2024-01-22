@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using YamlDotNet.Serialization;
+/*using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 using ChessDotNet;
@@ -13,7 +13,7 @@ using ChessDotNet.Variants.Atomic;
 using ChessDotNet.Variants.Crazyhouse;
 using ChessDotNet.Variants.KingOfTheHill;
 using ChessDotNet.Variants.ThreeCheck;
-using ChessDotNet.Variants;
+using ChessDotNet.Variants;*/
 using MockGithub.Self;
 
 namespace ChessGame
