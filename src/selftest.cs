@@ -4,9 +4,9 @@ using System.IO;
 using System.Text.RegularExpressions;
 using YamlDotNet.Serialization;
 
-namespace MockGithub
+namespace MockGithub.Self
 {
-    public class Program
+    public class SelfProgram
     {
         public static void Main(string[] args)
         {
