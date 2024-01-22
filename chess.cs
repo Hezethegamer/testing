@@ -14,6 +14,7 @@ using ChessDotNet.Variants.Crazyhouse;
 using ChessDotNet.Variants.KingOfTheHill;
 using ChessDotNet.Variants.ThreeCheck;
 using ChessDotNet.Variants;
+using MockGithub
 
 namespace ChessGame
 {
