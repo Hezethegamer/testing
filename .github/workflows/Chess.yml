@@ -26,7 +26,7 @@ jobs:
 
       - name: Compile and Run Chess
         run: |
-          mcs -out:chess ./ChessApp/Program.cs
+          mcs -out:chess chess.cs
           mono chess
 
       - name: Commit and Push Changes
