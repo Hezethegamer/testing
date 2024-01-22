@@ -17,6 +17,9 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: "8.x"
+      - name: install yml.net
+        run: |
+          dotnet add package YamlDotNet --version 13.7.1
 
       - name: Install Mono
         run: sudo apt-get install -y mono-complete
