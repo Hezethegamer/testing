@@ -30,7 +30,20 @@ namespace MockGithub
 
         public static void MainFn(Issue issue, string issueAuthor, string repoOwner)
         {
-            // Your implementation here
+            /*var moveData = new Dictionary<string, string>(); // Assuming you have a dictionary similar to move_data in Python
+        
+            var (result, reason) = issue.ExpectationsFulfilled();
+            
+            if (result)
+            {
+                Console.WriteLine($"\u001b[0m    \u001b[1m\u001b[32m✓ \u001b[0m\u001b[37m{moveData["move"]} by {moveData["author"]}\u001b[0m");
+                passed++;
+            }
+            else
+            {
+                Console.WriteLine($"\u001b[0m    \u001b[1m\u001b[31m✗ \u001b[0m\u001b[37m{moveData["move"]} by {moveData["author"]} \u001b[1m→ \u001b[31m{reason}\u001b[0m");
+                failed++;
+            }*/
         }
 
         public static (int, int) RunTestCase(string filename, Action<Issue, string, string> mainFn)
