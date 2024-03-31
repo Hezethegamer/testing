@@ -1,1 +1,1 @@
-{'@Hezethegamer': 1}
+{'@Hezethegamer': 1, '@the1Riddle': 1}
